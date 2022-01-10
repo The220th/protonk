@@ -95,7 +95,44 @@ protonk не реализует никаким образом функциона
 > sudo reboot now
 
 # Если вам нужны nvidia-утилиты (nvidia-smi, nvidia-bug-report.sh и др), то можете установить их командой:
-> sudo apt install nvidia-utils-460 # число 460 должно совпадать с версией ядра
+> sudo apt install nvidia-utils-460 # число 460 должно совпадать с версией драйвера
+```
+
+### arch
+
+На арче всё будет попроще. Вообще считается, что на `arch` играть лучше, чем на Debian-like. Например, вот набор команд, которые необходимы, если у вас arch и видео-карта `nvidia`:
+
+``` bash
+# Компиляция и установка tkg-ядра:
+> git clone https://github.com/Frogging-Family/linux-tkg
+> cd linux-tkg
+> makepkg -si
+
+# Отредактируйте grub как вам необходимо. Например, с помощью этой утилиты:
+> grub-customizer
+
+# Перезагрузитесь
+> reboot
+
+# Убедитесь, что вы загрузились в правильное ядро:
+> uname -r 
+# или
+> cat /proc/version
+
+# Проверьте, может быть у вас уже установлены необхоимые драйвера:
+> lspci -k | grep -A 2 -i "VGA" | grep "Kernel driver in use:"
+# Если Kernel driver in use: nouveau, то продолжайте вводить команды ниже
+# Если Kernel driver in use: nvidia, то в теории всё ок. Можно переходить к следующему пункту
+
+# Время ставить дрова на видеокарту nvidia:
+> git clone https://github.com/Frogging-Family/nvidia-all.git
+> cd nvidia-all
+> makepkg -si
+
+# Перезагрузитесь
+> reboot
+
+# Надеюсь, получилось загрузиться в систему)
 ```
 
 ## Установите steam
@@ -139,7 +176,25 @@ protonk не реализует никаким образом функциона
 
 ``` bash
 > sudo apt install wine winetricks
+
+# или "нестабильная" самая новая версия
+> wget -nc https://dl.winehq.org/wine-builds/winehq.key
+> sudo apt-key add winehq.key
+> sudo apt-add-repository 'https://dl.winehq.org/wine-builds/ubuntu/'
+> sudo apt update
+> sudo apt install --install-recommends winehq-staging
+> sudo apt install winetricks
 ```
+
+На `arch` так:
+
+``` bash
+> sudo pacman -Sy
+> sudo pacman -S wine-staging winetricks
+> sudo pacman -S giflib lib32-giflib libpng lib32-libpng libldap lib32-libldap gnutls lib32-gnutls mpg123 lib32-mpg123 openal lib32-openal v4l-utils lib32-v4l-utils libpulse lib32-libpulse alsa-plugins lib32-alsa-plugins alsa-lib lib32-alsa-lib libjpeg-turbo lib32-libjpeg-turbo libxcomposite lib32-libxcomposite libxinerama lib32-libxinerama ncurses lib32-ncurses opencl-icd-loader lib32-opencl-icd-loader libxslt lib32-libxslt libva lib32-libva gtk3 lib32-gtk3 gst-plugins-base-libs lib32-gst-plugins-base-libs vulkan-icd-loader lib32-vulkan-icd-loader cups samba dosbox
+```
+
+Также рекомендуется прочитать подробнее [тут](https://www.gloriouseggroll.tv/how-to-get-out-of-wine-dependency-hell/): https://www.gloriouseggroll.tv/how-to-get-out-of-wine-dependency-hell/
 
 # Установка
 
@@ -228,3 +283,36 @@ export DXVK_LOG_LEVEL="info"
 ``` bash
 chmod +x ./protonk-settings
 ```
+
+# QA
+
+## Как показывать информация по температуре, нагрузке CPU/GPU и т. п.
+
+Хорошим решением будет установить [mangohud](https://github.com/flightlessmango/MangoHud). После установки устанавливайте меременную среды `MANGOHUD` в единичку:
+
+``` bash
+MANGOHUD=1 %command%
+```
+
+## Как лочить fps
+
+Самый простой способ - это использовать опять-таки [mangohud](https://github.com/flightlessmango/MangoHud). Организуйте строку `fps_limit={нужное значение}` в `~/.config/MangoHud/MangoHud.conf`.
+
+## Есть ли аналог MSI-Afterburner
+
+Попробуйте [GreenWithEnvy](https://gitlab.com/leinardi/gwe)
+
+## Джунгли AMD драйверов на видеокарту
+
+Посмотрите [тут](https://www.linux.org.ru/forum/multimedia/15587007).
+
+## Вылетает на AMD-видеокарте
+
+Много из-за чего может возникнуть проблема.
+
+Попробуйте удалить AMDVLK.
+
+## В играх фризит при появлении "чего-то нового"
+
+При запуске задайте переменную среды `DXVK_ASYNC=1`. Это позволит "рендерить шейдеры" не "останавливая" игру, а прямо в процессе. Но тогда некоторые "текстуры и эффекты" могут появиться не сразу.
+
